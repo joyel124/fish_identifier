@@ -1,132 +1,160 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:camera/camera.dart';
 
-void main() {
-  runApp(MyApp());
+void main() => runApp(MaterialApp(
+  home: Home(),
+  debugShowCheckedModeBanner: false,
+));
+
+class Home extends StatefulWidget {
+  @override
+  _HomeState createState() => _HomeState();
 }
 
-class MyApp extends StatefulWidget {
-  MyApp({Key? key}) : super(key: key);
+class _HomeState extends State<Home> {
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
+  XFile? image;
 
-class _MyAppState extends State<MyApp> {
-  // Variables to store the captured/uploaded image and the classification result
-  String? imageResult;
-  CameraController? cameraController;
-  List<CameraDescription>? cameras;
-  String? classificationResult;
+  final ImagePicker picker = ImagePicker();
 
-  @override
-  void initState() {
-    super.initState();
-    initializeCamera();
+  //we can upload image from camera or from gallery based on parameter
+  Future getImage(ImageSource media) async {
+    var img = await picker.pickImage(source: media);
+
+    setState(() {
+      image = img;
+    });
   }
 
-  Future<void> initializeCamera() async {
-    cameras = await availableCameras();
-    cameraController = CameraController(cameras![0], ResolutionPreset.medium);
-    await cameraController!.initialize();
+  void identify() {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            title: Text('Clasificando...'),
+            content: Container(
+              height: MediaQuery.of(context).size.height / 10,
+              child: Column(
+                children: [
+                  SizedBox(height: 10),
+                  CircularProgressIndicator(),
+                  SizedBox(height: 10),
+                  Text('Por favor espere...'),
+                ],
+              ),
+            ),
+          );
+        });
   }
 
-  // Callback function for the "Tomar Foto" button
-  void capturePhoto() async {
-    if (cameraController != null && cameraController!.value.isInitialized) {
-      final picker = ImagePicker();
-      final pickedImage = await picker.pickImage(source: ImageSource.camera);
-
-      if (pickedImage != null) {
-        // The image was successfully captured
-        imageResult = pickedImage.path;
-        setState(() {});
-      } else {
-        // The user canceled or did not capture any image
-        // Handle the case accordingly
-      }
-    }
-  }
-
-  // Callback function for the "Subir Imagen" button
-  void uploadImage() async {
-    final picker = ImagePicker();
-    final pickedImage = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedImage != null) {
-      // The image was successfully picked
-      imageResult = pickedImage.path;
-      setState(() {}); // Refresh the UI to reflect the selected image
-    } else {
-      // The user canceled or did not select any image
-      // Handle the case accordingly
-    }
-  }
-
-  // Callback function for the "Clasificar" button
-  void classifyImage() {
-    // Implement your logic to classify the image and obtain the result
-    // Assign the classification result to the 'classificationResult' variable
+  //show popup dialog
+  void myAlert() {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            title: Text('Por favor seleccione una opcion'),
+            content: Container(
+              height: MediaQuery.of(context).size.height / 6,
+              child: Column(
+                children: [
+                  ElevatedButton(
+                    //if user click this button, user can upload image from gallery
+                    onPressed: () {
+                      Navigator.pop(context);
+                      getImage(ImageSource.gallery);
+                    },
+                    child: Row(
+                      children: [
+                        Icon(Icons.image),
+                        SizedBox(width: 10),
+                        Text('Abrir Galeria'),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton(
+                    //if user click this button. user can upload image from camera
+                    onPressed: () {
+                      Navigator.pop(context);
+                      getImage(ImageSource.camera);
+                    },
+                    child: Row(
+                      children: [
+                        Icon(Icons.camera),
+                        SizedBox(width: 10),
+                        Text('Abrir Camara'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      home: SafeArea(
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text("Fish Identifier"),
-            centerTitle: true,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Fish Identifier App'),
+        centerTitle: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(10),
           ),
-          backgroundColor: Colors.white,
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+        )
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            //if image not null show the image
+            //if image null show text
+            image != null
+                ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.file(
+                  //to show image, you type like this.
+                  File(image!.path),
+                  fit: BoxFit.cover,
+                  width: MediaQuery.of(context).size.width,
+                  height: 300,
                 ),
-                margin: const EdgeInsets.only(top: 50, bottom: 20, left: 50, right: 50),
-                height: 200,
-                alignment: Alignment.center,
-                child: Image.asset('assets/images/EmptyState.png'),
               ),
-              ButtonBar(
-                alignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: capturePhoto,
-                    child: const Text('Tomar Foto'),
-                  ),
-                  ElevatedButton(
-                    onPressed: uploadImage,
-                    child: const Text('Subir Imagen'),
-                  ),
-                ],
-              ),
-              ElevatedButton(
-                onPressed: classifyImage,
-                child: const Text('Clasificar'),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.black,
-                    width: 2,
-                  ),
+            )
+                : Text(
+              "Seleccione una imagen",
+              style: TextStyle(fontSize: 20),
+            ),
+            SizedBox(
+              height: 15,
+            ),
+            ElevatedButton(
+              onPressed: () {
+                myAlert();
+              },
+              child: Text('Subir Imagen'),
+            ),
+            ButtonBar(
+              alignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    identify();
+                  },
+                  child: Text('Clasificar'),
                 ),
-                margin: const EdgeInsets.only(top: 20, bottom: 20, left: 80, right: 80),
-                height: 50,
-                alignment: Alignment.center,
-                child: Text("Resultado: ${classificationResult ?? ''}"),
-              ),
-            ],
-          ),
+              ],
+            )
+          ],
         ),
       ),
     );
