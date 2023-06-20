@@ -34,10 +34,16 @@ class _HomeState extends State<Home> {
           return AlertDialog(
             shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            title: Text('Clasificando...'),
+            title: image!=null? Text('Clasificando...'):Text('Por favor seleccione una imagen'),
             content: Container(
               height: MediaQuery.of(context).size.height / 10,
-              child: Column(
+              child: image==null?
+              Icon(
+                Icons.error,
+                color: Colors.red,
+                size: 50,
+              ):
+              Column(
                 children: [
                   SizedBox(height: 10),
                   CircularProgressIndicator(),
