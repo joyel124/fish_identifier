@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 
 void main() => runApp(MaterialApp(
   home: Home(),
@@ -15,8 +17,13 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
 
   XFile? image;
-
+  String resultText = 'None';
   final ImagePicker picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   //we can upload image from camera or from gallery based on parameter
   Future getImage(ImageSource media) async {
@@ -27,33 +34,31 @@ class _HomeState extends State<Home> {
     });
   }
 
-  void identify() {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            title: image!=null? Text('Clasificando...'):Text('Por favor seleccione una imagen'),
-            content: Container(
-              height: MediaQuery.of(context).size.height / 10,
-              child: image==null?
-              Icon(
-                Icons.error,
-                color: Colors.red,
-                size: 50,
-              ):
-              Column(
-                children: [
-                  SizedBox(height: 10),
-                  CircularProgressIndicator(),
-                  SizedBox(height: 10),
-                  Text('Por favor espere...'),
-                ],
-              ),
-            ),
-          );
+  Future<void> identify(XFile imagen) async {
+
+    if (imagen != null) {
+      String url = 'http://192.168.1.4:5000/image'; // Reemplaza con la URL de tu endpoint
+      var request = http.MultipartRequest('POST', Uri.parse(url));
+      request.files.add(await http.MultipartFile.fromPath(
+          'file',
+          imagen.path
+      ));
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        String responseBody = await response.stream.bytesToString();
+        var jsonResult = json.decode(responseBody);
+
+        setState(() {
+          resultText = jsonResult; // Obtén el texto devuelto del JSON recibido
         });
+      } else {
+        print("Connection failed with status: ${response.statusCode}");
+        setState(() {
+          resultText = 'Error en la solicitud';
+        });
+      }
+    }
   }
 
   //show popup dialog
@@ -106,6 +111,7 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    print(resultText);
     return Scaffold(
       appBar: AppBar(
         title: Text('Fish Identifier App'),
@@ -154,9 +160,13 @@ class _HomeState extends State<Home> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    identify();
+                    identify(image!);
                   },
                   child: Text('Clasificar'),
+                ),
+                ElevatedButton(
+                  onPressed: () {},
+                  child: Text('Resultado: $resultText'),
                 ),
               ],
             )
