@@ -17,7 +17,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
 
   XFile? image;
-  String resultText = 'None';
+  String resultText = ' ';
   final ImagePicker picker = ImagePicker();
 
   @override
@@ -34,7 +34,7 @@ class _HomeState extends State<Home> {
     });
   }
 
-  Future<void> identify(XFile imagen) async {
+  Future<void> identify(XFile? imagen) async {
 
     if (imagen != null) {
       String url = 'http://192.168.1.4:5000/image'; // Reemplaza con la URL de tu endpoint
@@ -59,6 +59,31 @@ class _HomeState extends State<Home> {
         });
       }
     }
+    else{
+        notFindImage();
+    }
+  }
+
+  void notFindImage(){
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            title: Text('Ingrese una Imagen'),
+            content: Container(
+              height: MediaQuery.of(context).size.height / 8,
+              child: Center(
+                child: Icon(
+                  Icons.error,
+                  color: Colors.red,
+                  size: 70,
+                ),
+              ),
+            ),
+          );
+        });
   }
 
   //show popup dialog
@@ -160,7 +185,7 @@ class _HomeState extends State<Home> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    identify(image!);
+                    identify(image);
                   },
                   child: Text('Clasificar'),
                 ),
