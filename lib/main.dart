@@ -37,7 +37,7 @@ class _HomeState extends State<Home> {
   Future<void> identify(XFile? imagen) async {
 
     if (imagen != null) {
-      String url = 'http://192.168.1.4:5000/image'; // Reemplaza con la URL de tu endpoint
+      String url = 'http://192.168.43.116:5000/image'; // Reemplaza con la URL de tu endpoint
       var request = http.MultipartRequest('POST', Uri.parse(url));
       request.files.add(await http.MultipartFile.fromPath(
           'file',
